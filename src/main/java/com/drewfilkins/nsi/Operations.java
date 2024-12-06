@@ -1,4 +1,4 @@
-package dev.andrey.babkin.nsi;
+package com.drewfilkins.nsi;
 
 public enum Operations {
 
@@ -14,6 +14,10 @@ public enum Operations {
 
     Operations (String description) {
         this.description = description;
+    }
+
+    public String getName() {
+        return this.name();
     }
 
     public String getDescription() {
