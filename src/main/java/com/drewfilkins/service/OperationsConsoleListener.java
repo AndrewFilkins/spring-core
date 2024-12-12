@@ -1,158 +1,74 @@
 package com.drewfilkins.service;
 
+import com.drewfilkins.operations.ConsoleOperationType;
+import com.drewfilkins.operations.processors.OperationCommandProcessor;
 import jakarta.annotation.PostConstruct;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
-@Service
+@Component
 public class OperationsConsoleListener {
 
-    private static final String USER_CREATE = "USER_CREATE";
-    private static final String SHOW_ALL_USERS = "SHOW_ALL_USERS";
-    private static final String ACCOUNT_CREATE = "ACCOUNT_CREATE";
-    private static final String ACCOUNT_CLOSE = "ACCOUNT_CLOSE";
-    private static final String ACCOUNT_DEPOSIT = "ACCOUNT_DEPOSIT";
-    private static final String ACCOUNT_TRANSFER = "ACCOUNT_TRANSFER";
-    private static final String ACCOUNT_WITHDRAW = "ACCOUNT_WITHDRAW";
+    private final Scanner scanner;
+    private final Map<ConsoleOperationType, OperationCommandProcessor> processorMap;
 
-    private final UserService userService;
-    private final AccountService accountService;
-
-//    private final Scanner scanner = new Scanner(System.in);
-
-    public OperationsConsoleListener(UserService userService, AccountService accountService) {
-        this.userService = userService;
-        this.accountService = accountService;
+    public OperationsConsoleListener(Scanner scanner, List<OperationCommandProcessor> operationCommandProcessorList) {
+        this.scanner = scanner;
+        this.processorMap = operationCommandProcessorList
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                OperationCommandProcessor::getOperationType,
+                                proccessor -> proccessor
+                        )
+                );
     }
 
-    @PostConstruct
-    public void runAfterStartup() {
-        readOperation();
+    public void start() {
+        System.out.println("Console listener is stated!");
     }
 
-    private void readOperation() {
-        try(Scanner scanner = new Scanner(System.in)) {
-            System.out.println("""
-                    \nPlease enter one of operation type:
-                    -ACCOUNT_CREATE
-                    -SHOW_ALL_USERS
-                    -ACCOUNT_CLOSE
-                    -ACCOUNT_WITHDRAW
-                    -ACCOUNT_DEPOSIT
-                    -ACCOUNT_TRANSFER
-                    -USER_CREATE""");
-            String operation = scanner.nextLine();
-            switch (operation) {
-                case USER_CREATE -> userCreate(scanner);
-                case SHOW_ALL_USERS -> showAllUsers();
-                case ACCOUNT_CREATE -> accountCreate(scanner);
-                case ACCOUNT_CLOSE -> accountClose(scanner);
-                case ACCOUNT_WITHDRAW -> accountWithdraw(scanner);
-                case ACCOUNT_DEPOSIT -> accountDeposit(scanner);
-                case ACCOUNT_TRANSFER -> accountTransfer(scanner);
-                default -> defaultOperation();
+    public void endListen() {
+        System.out.println("Console listener is stopped!");
+    }
+
+    public void listenToUpdates() {
+        while (!Thread.currentThread().isInterrupted()) {
+            System.out.println("\nPlease enter one of operation type:");
+            printAllAvailableOperations();
+            var operationType = listenNextOperation();
+            proccessNextOperation(operationType);
+        }
+
+    }
+
+    private void printAllAvailableOperations() {
+        processorMap.keySet().forEach(command -> System.out.println("- " + command));
+    }
+
+    private ConsoleOperationType listenNextOperation() {
+        while (!Thread.currentThread().isInterrupted()) {
+            var nextOperation = scanner.nextLine();
+            try {
+                return ConsoleOperationType.valueOf(nextOperation);
+            } catch (IllegalArgumentException e) {
+                System.out.println("No such operation!");
             }
         }
+        return null;
     }
 
-    private void defaultOperation() {
-        System.out.println("Undefined operation!");
-        readOperation();
+    private void proccessNextOperation(ConsoleOperationType operationType) {
+        try {
+            var processor = processorMap.get(operationType);
+            processor.process();
+        } catch (Exception e) {
+            System.out.printf("Error executing operation %s: error=%s%n", operationType, e.getMessage());
+        }
     }
 
-    private void userCreate(Scanner scanner) {
-        System.out.println("Enter login for new user:");
-        String login = scanner.nextLine();
-        userService.userCreate(login);
-        readOperation();
-    }
-
-    private void showAllUsers() {
-        System.out.println("List of all users:");
-        userService.getAllUsers().forEach(u -> System.out.println(u));
-        readOperation();
-    }
-
-    private void accountCreate(Scanner scanner) {
-        System.out.println("Enter the user id for which to create an account:");
-        while (scanner.hasNext()) {
-            if (!scanner.hasNextInt()) {
-                System.out.println("Illegal argument! User id should be an integer!");
-                scanner.next();
-            } else {
-                accountService.createAccountByUserId(scanner.nextInt());
-                break;
-            }
-        }
-        readOperation();
-    }
-
-    private void accountClose(Scanner scanner) {
-        System.out.println("Enter account ID to close:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Account id should be an integer!");
-            scanner.next();
-        }
-        int accountId = scanner.nextInt();
-        accountService.accountClose(accountId);
-        readOperation();
-    }
-
-    private void accountWithdraw(Scanner scanner) {
-        System.out.println("Enter account ID:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Account id should be an integer!");
-            scanner.next();
-        }
-        int accountId = scanner.nextInt();
-        System.out.println("Enter amount to withdraw:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Amount should be an integer!");
-            scanner.next();
-        }
-        int amount = scanner.nextInt();
-        accountService.accountWithdraw(accountId, amount);
-        readOperation();
-    }
-
-    private void accountDeposit(Scanner scanner) {
-        System.out.println("Enter account ID:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Account id should be an integer!");
-            scanner.next();
-        }
-        int accountId = scanner.nextInt();
-        System.out.println("Enter amount to deposit:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Amount should be an integer!");
-            scanner.next();
-        }
-        int amount = scanner.nextInt();
-        accountService.accountDeposit(accountId, amount);
-        readOperation();
-    }
-
-    private void accountTransfer(Scanner scanner) {
-        System.out.println("Enter source account ID:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Account id should be an integer!");
-            scanner.next();
-        }
-        int sourceAccountId = scanner.nextInt();
-        System.out.println("Enter target account ID:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Account id should be an integer!");
-            scanner.next();
-        }
-        int targetAccountId = scanner.nextInt();
-        System.out.println("Enter amount to transfer:");
-        while (!scanner.hasNextInt()) {
-            System.out.println("Illegal argument! Amount should be an integer!");
-            scanner.next();
-        }
-        int amount = scanner.nextInt();
-        accountService.accountTransfer(sourceAccountId, targetAccountId, amount);
-        readOperation();
-    }
 }

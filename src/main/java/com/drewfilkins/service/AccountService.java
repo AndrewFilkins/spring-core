@@ -49,7 +49,7 @@ public class AccountService {
             System.out.printf("New account created with ID: %d for user: %s%n", account.getId(), user.get().getLogin());
             accountRepository.addAccount(account);
         } else {
-            System.out.println("There's no user with such id!");
+            throw new IllegalArgumentException("There's no user with id=%d".formatted(userId));
         }
         return account;
     }
@@ -62,10 +62,10 @@ public class AccountService {
                 currAccount.setMoneyAmount(currAccount.getMoneyAmount() + amount);
                 System.out.printf("Amount %d deposited to account ID: %d%n", amount, accountId);
             } else {
-                System.out.println("There's no account with such id!");
+                throw new IllegalArgumentException("There's no account with id=%d".formatted(accountId));
             }
         } else {
-            System.out.println("Amount should be greater than zero!");
+            throw new IllegalArgumentException("Amount should be greater than zero!");
         }
     }
 
@@ -79,13 +79,13 @@ public class AccountService {
                     currAccount.setMoneyAmount(currAmount - amountToWithdraw);
                     System.out.printf("Amount %d withdrawn from account ID: %d%n", amountToWithdraw, accountId);
                 } else {
-                    System.out.printf("Not enough funds to withdraw: account id=%d, amount=%d, attemptedWithdraw=%d%n", accountId, currAmount, amountToWithdraw);
+                    throw new IllegalArgumentException("Not enough funds to withdraw: account id=%d, amount=%d, attemptedWithdraw=%d%n".formatted(accountId, currAmount, amountToWithdraw));
                 }
             } else {
-                System.out.println("There's no account with such id!");
+                throw new IllegalArgumentException("There's no account with id=%d".formatted(accountId));
             }
         } else {
-            System.out.println("Amount should be greater than zero!");
+            throw new IllegalArgumentException("Amount should be greater than zero!");
         }
     }
 
@@ -105,10 +105,10 @@ public class AccountService {
                 accountRepository.deleteAccount(currAccount);
                 System.out.printf("Account with ID=%d has been closed.%n", accountId);
             } else {
-                System.out.printf("Could not close account with ID=%d because it's the only account for user with ID=%d%n", accountId, currAccount.getUserId());
+                throw new IllegalArgumentException("Could not close account with ID=%d because it's the only account for user with ID=%d%n".formatted(accountId, currAccount.getUserId()));
             }
         } else {
-            System.out.println("There's no account with such id!");
+            throw new IllegalArgumentException("There's no account with id=%d".formatted(accountId));
         }
     }
 
@@ -123,24 +123,24 @@ public class AccountService {
                 int actualSourceAccountMoneyAmount = actualSourceAccount.getMoneyAmount();
                 if (actualSourceAccount.getUserId().equals(actualTargetAccount.getUserId())) {
                     if (actualSourceAccountMoneyAmount >= amountToTransfer) {
-                        actualSourceAccount.setMoneyAmount(actualSourceAccountMoneyAmount - amountToTransfer);
+                       actualSourceAccount.setMoneyAmount(actualSourceAccountMoneyAmount - amountToTransfer);
                     } else {
-                        System.out.printf("Not enough funds to transfer: account id=%d, amount=%d, amountToTransfer=%d%n", sourceAccountId, actualSourceAccount.getMoneyAmount(), amountToTransfer);
+                        throw new IllegalArgumentException("Not enough funds to transfer: account id=%d, amount=%d, amountToTransfer=%d%n".formatted(sourceAccountId, actualSourceAccount.getMoneyAmount(), amountToTransfer));
                     }
                 } else {
                     if (actualSourceAccountMoneyAmount >= amountToTransfer + amountToTransfer * transferCommission / 100) {
                         actualSourceAccount.setMoneyAmount(actualSourceAccountMoneyAmount - amountToTransfer - amountToTransfer * transferCommission / 100);
                     } else {
-                        System.out.printf("Not enough funds to transfer: account id=%d, amount=%d, amountToTransfer=%d%n", sourceAccountId, actualSourceAccount.getMoneyAmount(), amountToTransfer);
+                        throw new IllegalArgumentException("Not enough funds to transfer: account id=%d, amount=%d, amountToTransfer=%d%n".formatted(sourceAccountId, actualSourceAccount.getMoneyAmount(), amountToTransfer));
                     }
                 }
                 actualTargetAccount.setMoneyAmount(actualTargetAccount.getMoneyAmount() + amountToTransfer);
                 System.out.printf("Amount %d transferred from account ID %d to account ID %d.%n", amountToTransfer, sourceAccountId, targetAccountId);
             } else {
-                System.out.printf("There's no account with ID=%d!%n", targetAccountId);
+                throw new IllegalArgumentException("There's no account with ID=%d!%n".formatted(targetAccountId));
             }
         } else {
-            System.out.printf("There's no account with ID=%d!%n", sourceAccountId);
+            throw new IllegalArgumentException("There's no account with ID=%d!%n".formatted(sourceAccountId));
         }
     }
 

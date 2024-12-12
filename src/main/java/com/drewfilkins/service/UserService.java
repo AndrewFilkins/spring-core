@@ -35,7 +35,7 @@ public class UserService {
     public void userCreate(String login) {
         Optional<User> user = userRepository.findByLogin(login);
         if (user.isPresent()) {
-            System.out.println("User with given login already exists!\n");
+            throw new IllegalArgumentException("User with login=%s already exists!%n".formatted(login));
         } else {
             User newUser = new User(userIdCounter.getAndIncrement(), login, null);
             Account account = accountService.createAccount(newUser);
