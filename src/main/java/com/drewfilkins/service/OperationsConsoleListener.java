@@ -2,7 +2,6 @@ package com.drewfilkins.service;
 
 import com.drewfilkins.operations.ConsoleOperationType;
 import com.drewfilkins.operations.processors.OperationCommandProcessor;
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -67,7 +66,7 @@ public class OperationsConsoleListener {
             var processor = processorMap.get(operationType);
             processor.process();
         } catch (Exception e) {
-            System.out.printf("Error executing operation %s: error=%s%n", operationType, e.getMessage());
+            System.out.printf("Error executing operation %s: error = %s%n", operationType, e.getMessage());
         }
     }
 

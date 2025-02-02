@@ -1,16 +1,25 @@
 package com.drewfilkins.model;
 
+import jakarta.persistence.*;
+
 import java.util.List;
 
+@Entity
+@Table(name = "users")
 public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String login;
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private List<Account> accountList;
 
-    public User(Integer id, String login, List<Account> accountList) {
-        this.id = id;
+    public User() {
+    }
+
+    public User(String login) {
         this.login = login;
-        this.accountList = accountList;
     }
 
     public Integer getId() {

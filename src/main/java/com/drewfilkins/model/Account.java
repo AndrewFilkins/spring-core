@@ -1,13 +1,23 @@
 package com.drewfilkins.model;
 
+import jakarta.persistence.*;
+
+@Entity
 public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private Integer userId;
+    @ManyToOne(cascade = {CascadeType.MERGE}, fetch= FetchType.EAGER)
+    @JoinColumn(name = "userId")
+    private User user;
     private Integer moneyAmount;
 
-    public Account(Integer id, Integer userId, Integer moneyAmount) {
-        this.id = id;
-        this.userId = userId;
+    public Account() {
+    }
+
+    public Account(User user, Integer moneyAmount) {
+        this.user = user;
         this.moneyAmount = moneyAmount;
     }
 
@@ -19,12 +29,12 @@ public class Account {
         this.id = id;
     }
 
-    public Integer getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Integer getMoneyAmount() {
@@ -39,7 +49,7 @@ public class Account {
     public String toString() {
         return "Account{" +
                 "id=" + id +
-                ", userId=" + userId +
+                ", userId=" + user.getId() +
                 ", moneyAmount=" + moneyAmount +
                 '}';
     }
