@@ -1,29 +1,40 @@
 package com.drewfilkins.repository;
 
+import com.drewfilkins.TransactionHelper;
 import com.drewfilkins.model.User;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Component
 public class UserRepository {
-    List<User> users = new ArrayList<>();
 
-    public Optional<User> findByLogin(String login) {
-        return users.stream().filter(u -> u.getLogin().equals(login)).findFirst();
+    private final TransactionHelper transactionHelper;
+
+    public UserRepository(TransactionHelper transactionHelper) {
+        this.transactionHelper = transactionHelper;
     }
 
-    public Optional<User> findById(int id) {
-        return users.stream().filter(u -> u.getId() == id).findFirst();
+    public Optional<User> findByLogin(Session session, String login) {
+        Query query = session.createQuery("from User where login = :login");
+        query.setParameter("login", login);
+        if (!query.list().isEmpty())
+            return Optional.of((User) query.list().get(0));
+        return Optional.empty();
     }
 
-    public List<User> findAll() {
-        return users;
+    public Optional<User> findById(Session session, int id) {
+        return Optional.ofNullable(session.get(User.class, id));
     }
 
-    public void addUser(User user) {
-        users.add(user);
+    public List<User> findAll(Session session) {
+        try (session) {
+            Query query = session.createQuery("from User");
+            return query.list();
+        }
     }
 }
